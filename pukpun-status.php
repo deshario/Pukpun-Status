@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PukPun Status
  * Plugin URI: https://github.com/deshario/pukpun-hubs
- * Description: Create or modify status for woocommerce orders
+ * Description: Modify woocommerce status label to your own alias
  * Version:     1.0
  * Author:      Deshario Sunil
  * Author URI:  https://github.com/deshario
@@ -15,7 +15,7 @@
     exit; // Exit if accessed directly
   }
 
-  function init_pukpun_status_db(){
+  function activate_pukpun_status(){
     global $wpdb;
     $charset_collate = $wpdb->get_charset_collate();
     $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
@@ -40,16 +40,24 @@
       (8, '[wc-failed]', 'Failed');");
     }
   }
-  register_activation_hook( __FILE__, 'init_pukpun_status_db' );
+  register_activation_hook( __FILE__, 'activate_pukpun_status');
 
-  add_action('admin_menu', 'init_pukpun_status');
-  function init_pukpun_status(){
+  add_action('admin_menu', 'initializePlugin');
+  function initializePlugin(){
+    if (!is_plugin_active('woocommerce/woocommerce.php') && !class_exists('WooCommerce')){
+      add_action('admin_notices',function(){
+        echo '<div id="message" class="error notice is-dismissible">
+          <p>Pukpun Status is enabled, but it requires <b>WooCommerce</b> in order to work properly.</p>
+        </div>';
+      });
+    }
+    init_pukpunStatusMenu();
+  }
+
+  function init_pukpunStatusMenu(){
     add_menu_page(
-      'Pukpun Status', 'PukPun Status', 'manage_options', 'pukpun_status', 'manageStatus', 'dashicons-image-filter' 
+      'Pukpun Status', 'PukPun Status', 'manage_options', 'pukpun_status', 'statusIndex', 'dashicons-image-filter' 
     );
-    // add_submenu_page(
-    //   'pukpun_status', 'Create Status', 'Create Status', 'manage_options', 'pukpun_routeswwww', 'manageStatus'
-    // );
   }
 
   add_action('admin_enqueue_scripts','pukpun_status_style'); 
@@ -65,55 +73,73 @@
     }
   }
 
-  function manageStatus(){
+  function statusIndex(){
     include(plugin_dir_path( __FILE__ ).'/templates/pk-status.php');
   }
   
-    add_filter( 'wc_order_statuses', 'wc_renaming_order_status' );
-    function wc_renaming_order_status($order_statuses){
-        global $wpdb;
-        $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
-        $results = $wpdb->get_results("SELECT * FROM $tbl_pukpun_status");
-        foreach ($order_statuses as $key => $status){
-            foreach($results as $eResult){
-                $eachKey = trim($eResult->status_key,"[]");
-                if($key == $eachKey){
-                    $order_statuses[$eachKey] = _x($eResult->status_value, 'Order status', 'woocommerce' );
-                }
-            }
+  add_filter( 'wc_order_statuses', 'wc_renaming_order_status' );
+  function wc_renaming_order_status($order_statuses){
+    global $wpdb;
+    $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
+    $results = $wpdb->get_results("SELECT * FROM $tbl_pukpun_status");
+    foreach ($order_statuses as $key => $status){
+      foreach($results as $eResult){
+        $eachKey = trim($eResult->status_key,"[]");
+        if($key == $eachKey){
+          $order_statuses[$eachKey] = _x($eResult->status_value, 'Order status', 'woocommerce' );
         }
-        return $order_statuses;
+      }
     }
+    return $order_statuses;
+  }
 
-    // add_filter( 'bulk_actions-edit-shop_order', 'custom_dropdown_bulk_actions_shop_order', 20, 1 );
-    // function custom_dropdown_bulk_actions_shop_order( $actions ) {
-    //     $actions['mark_processing'] = __( 'Mark paid', 'woocommerce' );
-    //     $actions['mark_on-hold']    = __( 'Mark pending', 'woocommerce' );
-    //     $actions['mark_completed']  = __( 'Mark order received', 'woocommerce' );
-    //     return $actions;
-    // }
-
-    foreach(array('post', 'shop_order') as $hook )
-    add_filter( "views_edit-$hook", 'shop_order_modified_views' );
-
-    function shop_order_modified_views($views){
-        global $wpdb;
-        $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
-        $results = $wpdb->get_results("SELECT * FROM $tbl_pukpun_status");
-        foreach ($results as $key => $eachStatus){
-            $status = trim($eachStatus->status_key,"[]");
-            if(isset($views[$status])){
-                $views[$status] = str_replace('Pending payment', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
-                $views[$status] = str_replace('Processing', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
-                $views[$status] = str_replace('Checking Payment', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
-                $views[$status] = str_replace('On hold', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
-                $views[$status] = str_replace('Completed', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
-                $views[$status] = str_replace('Cancelled', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
-                $views[$status] = str_replace('Refunded', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
-                $views[$status] = str_replace('Failed', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
-            }
-        }
-        return $views;
+  add_filter( 'bulk_actions-edit-shop_order', 'custom_dropdown_bulk_actions_shop_order', 20, 1 );
+  function custom_dropdown_bulk_actions_shop_order($actions){
+    global $wpdb;
+    $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
+    $results = $wpdb->get_results("SELECT * FROM $tbl_pukpun_status");
+    foreach ($results as $key => $eachStatus){
+      $status = trim($eachStatus->status_key,"[]");
+      $sData = explode("-",$status);
+      $counter = count($sData);
+      $res = $counter == 3 ? $sData[1].'-'.$sData[2] : $sData[1];
+      $processingLabel = explode("to ",$actions['mark_processing']);
+      $onHoldLabel = explode("to ",$actions['mark_on-hold']);
+      $onCompleteLabel = explode("to ",$actions['mark_completed']);
+      if($res == $processingLabel[1]){
+        $actions['mark_processing'] = str_replace('processing', __($eachStatus->status_value, 'woocommerce'),$actions['mark_processing']);
+      }
+      if($res == $onHoldLabel[1]){
+        $actions['mark_on-hold'] = str_replace('on-hold', __($eachStatus->status_value, 'woocommerce'),$actions['mark_on-hold']);
+      }
+      if($res == $onCompleteLabel[1]){
+        $actions['mark_completed'] = str_replace('completed', __($eachStatus->status_value, 'woocommerce'),$actions['mark_completed']);
+      }
     }
+    return $actions;
+  }
+
+  foreach(array('post', 'shop_order') as $hook)
+  add_filter( "views_edit-$hook", 'shop_order_modified_views' );
+
+  function shop_order_modified_views($views){
+    global $wpdb;
+    $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
+    $results = $wpdb->get_results("SELECT * FROM $tbl_pukpun_status");
+    foreach ($results as $key => $eachStatus){
+      $status = trim($eachStatus->status_key,"[]");
+      if(isset($views[$status])){
+        $views[$status] = str_replace('Pending payment', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
+        $views[$status] = str_replace('Processing', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
+        $views[$status] = str_replace('Checking Payment', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
+        $views[$status] = str_replace('On hold', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
+        $views[$status] = str_replace('Completed', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
+        $views[$status] = str_replace('Cancelled', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
+        $views[$status] = str_replace('Refunded', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
+        $views[$status] = str_replace('Failed', __($eachStatus->status_value, 'woocommerce'), $views[$status]);
+      }
+    }
+    return $views;
+  }
   
 ?>

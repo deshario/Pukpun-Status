@@ -7,62 +7,72 @@
         border-radius: 4px;
         cursor:pointer;
     }
+    .update-nag{display:none;}
+    body{background:#f1f1f1;}
 </style>
-<div class="ui grid" style="margin-right:5px; margin-top:5px;">
-   <div class="wide column">
-   <table class="ui compact celled definition table">
-    <thead class="full-width">
-        <tr>
-            <th style='width:50px;'></th>
-            <th>Slug</th>
-            <th>Label</th>
-            <th class="one wide" style="text-align:center">Options</th>
-        </tr>
-    </thead>
-    <tbody>
-        <script>var eachResult = [];</script>
-        <?php
-            function getLabelColor($key){
-                switch($key){
-                    case '[wc-pending]':
-                        return 'ui grey label';
-                    case '[wc-processing]':
-                        return 'ui teal label';
-                    case '[wc-checking-payment]':
-                        return 'ui blue label';
-                    case '[wc-completed]':
-                        return 'ui green label';
-                    case '[wc-failed]':
-                    case '[wc-cancelled]':
-                        return 'ui red label';
-                    case '[wc-on-hold]':
-                        return 'ui orange label';
-                    case '[wc-refunded]':
-                        return 'ui olive label';
+
+<div class="ui one column grid" style="margin-right:5px; margin-top:5px;">
+  <div class="column">
+    <div class="ui raised segment">
+      <a class="ui green ribbon label">Pukpun Status</a>
+      <div class="ui left pointing green basic label">
+        Modify woocommerce status label to your own alias
+      </div>
+      <span></span>
+      <table class="ui very basic collapsing celled table" style="width:100%">
+        <thead class="full-width">
+            <tr>
+                <th style='width:50px;'></th>
+                <th>Slug</th>
+                <th>Alias</th>
+                <th class="one wide" style="text-align:center">Options</th>
+            </tr>
+        </thead>
+        <tbody>
+            <script>var eachResult = [];</script>
+            <?php
+                function getLabelColor($key){
+                    switch($key){
+                        case '[wc-pending]':
+                            return 'ui grey label';
+                        case '[wc-processing]':
+                            return 'ui teal label';
+                        case '[wc-checking-payment]':
+                            return 'ui blue label';
+                        case '[wc-completed]':
+                            return 'ui green label';
+                        case '[wc-failed]':
+                        case '[wc-cancelled]':
+                            return 'ui red label';
+                        case '[wc-on-hold]':
+                            return 'ui orange label';
+                        case '[wc-refunded]':
+                            return 'ui olive label';
+                    }
                 }
-            }
-            global $wpdb;
-            $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
-            $result = $wpdb->get_results("SELECT * FROM $tbl_pukpun_status");
-            $iterator = 1;
-            foreach($result as $result){ ?>
-                <script>
-                    eachResult.push(`<?php echo json_encode($result); ?>`);
-                </script>
-                <tr>
-                    <td style='text-align:center'><?= $iterator; ?></td>
-                    <td style='height: 40px;'><code class='code'><?= $result->status_key; ?></code></td>
-                    <td><a class="<?= getLabelColor($result->status_key) ?>"><?= $result->status_value; ?></a></td>
-                    <td style="text-align:center;">
-                        <button style="padding-top:7px;" class="ui icon button" onclick="viewStatus(eachResult[`<?= $iterator-1; ?>`])">
-                            <i class="pencil icon"></i>
-                        </button>
-                    </td>
-                </tr>
-            <?php $iterator++; }
-        ?>
-    </tbody>
+                global $wpdb;
+                $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
+                $result = $wpdb->get_results("SELECT * FROM $tbl_pukpun_status");
+                $iterator = 1;
+                foreach($result as $result){ ?>
+                    <script>
+                        eachResult.push(`<?php echo json_encode($result); ?>`);
+                    </script>
+                    <tr>
+                        <td style='text-align:center'><?= $iterator; ?></td>
+                        <td style='height: 40px;'><code class='code'><?= $result->status_key; ?></code></td>
+                        <td><a class="<?= getLabelColor($result->status_key) ?>"><?= $result->status_value; ?></a></td>
+                        <td style="text-align:center;">
+                            <button style="padding-top:7px;" class="ui icon button" onclick="viewStatus(eachResult[`<?= $iterator-1; ?>`])">
+                                <i class="pencil icon"></i>
+                            </button>
+                        </td>
+                    </tr>
+                <?php $iterator++; }
+            ?>
+        </tbody>
     </table>
+    </div>
   </div>
 </div>
 
@@ -72,7 +82,7 @@
   <div class="content">
     <form class="ui form">
         <div class="field">
-            <label>Label</label>
+            <label>Alias</label>
             <input type="text" name="statusLabel"/>
             <input type="hidden" name="statusKey"/>
             <input type="hidden" name="statusId"/>
@@ -124,7 +134,7 @@
                 }
             });
         }else{
-            alert('Invalid Label');
+            alert('Invalid Alias');
         }
     }
 </script>

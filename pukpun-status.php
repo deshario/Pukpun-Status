@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: PukPun Status
- * Plugin URI: https://github.com/deshario/pukpun-hubs
+ * Plugin URI:  https://github.com/deshario/wocommerce-custom-status
  * Description: Modify woocommerce status label to your own alias
  * Version:     1.0
  * Author:      Deshario Sunil

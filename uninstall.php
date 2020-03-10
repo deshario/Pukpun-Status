@@ -16,4 +16,4 @@
   }
 
   global $wpdb;
-  $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}pukpun_status");
+  $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}wsm_status");

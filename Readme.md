@@ -1,4 +1,4 @@
-# PukPun Status
+# Woocommerce Status Manager
  
 Functionalities
 * Modify alias for woocommerce order status

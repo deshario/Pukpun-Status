@@ -54,8 +54,8 @@
                 }
 
                 global $wpdb;
-                $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
-                $result = $wpdb->get_results("SELECT * FROM $tbl_pukpun_status");
+                $tbl_wsm_status = $wpdb->prefix.'wsm_status';
+                $result = $wpdb->get_results("SELECT * FROM $tbl_wsm_status");
                 $iterator = 1;
                 foreach($result as $result){ ?>
                     <script>

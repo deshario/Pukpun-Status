@@ -18,7 +18,7 @@
                 <th style='width:50px;'></th>
                 <th>Slug</th>
                 <th>Alias</th>
-                <th class="one wide" style="text-align:center">Options</th>
+                <th class="one wide" style="text-align:center; width:10.25%;">Options</th>
             </tr>
         </thead>
         <tbody>

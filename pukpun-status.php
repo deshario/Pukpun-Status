@@ -24,20 +24,21 @@
         status_id int(11) NOT NULL AUTO_INCREMENT,
         status_key varchar(255) NOT NULL,
         status_value varchar(255) NOT NULL,
+        status_custom enum('true', 'false') NOT NULL,
         UNIQUE KEY (status_id)
       );";
       require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
       dbDelta($queryHub);
       $wpdb->query("ALTER TABLE $tbl_pukpun_status CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci");
-      $wpdb->query("INSERT INTO $tbl_pukpun_status (`status_id`, `status_key`, `status_value`) VALUES
-      (1, '[wc-pending]', 'Pending payment'),
-      (2, '[wc-processing]', 'Processing'),
-      (3, '[wc-checking-payment]', 'Checking Payment'),
-      (4, '[wc-on-hold]', 'On hold'),
-      (5, '[wc-completed]', 'Completed'),
-      (6, '[wc-cancelled]', 'Cancelled'),
-      (7, '[wc-refunded]', 'Refunded'),
-      (8, '[wc-failed]', 'Failed');");
+      $wpdb->query("INSERT INTO $tbl_pukpun_status (`status_id`, `status_key`, `status_value`, `status_custom`) VALUES
+      (1, '[wc-pending]', 'Pending payment','false'),
+      (2, '[wc-processing]', 'Processing','false'),
+      (3, '[wc-checking-payment]', 'Checking Payment','false'),
+      (4, '[wc-on-hold]', 'On hold','false'),
+      (5, '[wc-completed]', 'Completed','false'),
+      (6, '[wc-cancelled]', 'Cancelled','false'),
+      (7, '[wc-refunded]', 'Refunded','false'),
+      (8, '[wc-failed]', 'Failed','false');");
     }
   }
   register_activation_hook( __FILE__, 'activate_pukpun_status');
@@ -76,21 +77,52 @@
   function statusIndex(){
     include(plugin_dir_path( __FILE__ ).'/templates/pk-status.php');
   }
+
+  function getCustomStatus(){
+    $status = array();
+    global $wpdb;
+    $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
+    $result = $wpdb->get_results("SELECT * FROM $tbl_pukpun_status WHERE status_custom = 'true'");
+    foreach($result as $eachResult){
+      array_push($status,$eachResult);
+    }
+    return $status;
+  }
+
+  function register_shipment_arrival_order_status(){
+    $customStatus = getCustomStatus();
+    foreach($customStatus as $eachStatus){
+      register_post_status($eachStatus->status_key,
+      array(
+        'label'                     => $eachStatus->status_value,
+        'public'                    => true,
+        'show_in_admin_status_list' => true,
+        'show_in_admin_all_list'    => true,
+        'exclude_from_search'       => false,
+        'label_count'               => _n_noop($eachStatus->status_value.'<span class="count">(%s)</span>', $eachStatus->status_value.'<span class="count">(%s)</span>' )
+      )
+    );
+  }
+}
+
+add_action('init', 'register_shipment_arrival_order_status');
   
   add_filter( 'wc_order_statuses', 'wc_renaming_order_status' );
   function wc_renaming_order_status($order_statuses){
     global $wpdb;
+    $new_order_statuses = array();
     $tbl_pukpun_status = $wpdb->prefix.'pukpun_status';
     $results = $wpdb->get_results("SELECT * FROM $tbl_pukpun_status");
     foreach ($order_statuses as $key => $status){
       foreach($results as $eResult){
         $eachKey = trim($eResult->status_key,"[]");
+        $new_order_statuses[$eachKey] = $eResult->status_value;
         if($key == $eachKey){
-          $order_statuses[$eachKey] = _x($eResult->status_value, 'Order status', 'woocommerce' );
+          $new_order_statuses[$eachKey] = _x($eResult->status_value, 'Order status', 'woocommerce' );
         }
       }
     }
-    return $order_statuses;
+    return $new_order_statuses;
   }
 
   add_filter( 'bulk_actions-edit-shop_order', 'custom_dropdown_bulk_actions_shop_order', 20, 1 );

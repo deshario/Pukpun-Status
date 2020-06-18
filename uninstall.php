@@ -16,4 +16,4 @@
   }
 
   global $wpdb;
-  $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}de_meeting_rooms");
+  $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}wsm_status");
